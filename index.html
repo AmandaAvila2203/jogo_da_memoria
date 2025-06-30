@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jogo da Memória - Toy Story</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700;800&display=swap" rel="stylesheet" />
+  <style>
+    /* === GERAL === */
+    body {
+      margin: 0;
+      font-family: 'Baloo 2', cursive;
+      background: url('https://wallpapers.com/images/hd/toy-story-cloud-3840-x-2400-background-gcyxkamw84liuiud.jpg') center/cover no-repeat fixed;
+      background-size: cover;
+      background-position: center;
+      overflow: hidden;
+    }
+
+    /* === LOGOS === */
+    .logos {
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      z-index: 10;
+    }
+    .logo-fmp {
+      width: 100px;
+    }
+    .logo-ads {7
+      width: 90px;
+    }
+
+    /* === TÍTULO === */
+    .titulo {
+      text-align: center;
+      font-size: 3rem;
+      color: #4b0082;
+      margin-top: 1rem;
+      font-weight: bold;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    /* === BOTÕES DE NÍVEL === */
+    .botoes-niveis {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-top: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-nivel {
+      padding: 1rem 1.8rem;
+      border-radius: 1rem;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: white;
+      text-align: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 0.2s ease-in-out;
+    }
+    .btn-nivel:hover {
+      transform: translateY(-5px);
+    }
+    .facil {
+      background: linear-gradient(145deg, #4caf50, #2e7d32);
+    }
+    .medio {
+      background: linear-gradient(145deg, #ff9800, #ef6c00);
+    }
+    .dificil {
+      background: linear-gradient(145deg, #f44336, #b71c1c);
+    }
+
+    /* === BOTÃO ENGENAGEM === */
+    .gear-btn {
+      background: url('https://example.com/engrenagem.png') no-repeat center/contain;
+      width: 48px;
+      height: 48px;
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      border: none;
+      cursor: pointer;
+      z-index: 20;
+      transition: transform 0.5s ease-in-out;
+    }
+    .gear-btn:hover {
+      transform: rotate(90deg);
+    }
+
+    /* === TABULEIRO === */
+    #tabuleiro {
+      display: grid;
+      gap: 1rem;
+      justify-content: center;
+      padding: 1rem;
+      max-width: 95vw;
+      margin-top: 0.5rem;
+    }
+
+    /* === CARTAS === */
+    .card {
+      width: 120px;
+      height: 120px;
+      position: relative;
+      perspective: 1000px;
+      cursor: pointer;
+      border-radius: 1rem;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .card-inner {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transition: transform 0.6s;
+      transform-style: preserve-3d;
+      border-radius: 1rem;
+    }
+
+    .card.flipped .card-inner {
+      transform: rotateY(180deg);
+    }
+
+    .card-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 1rem;
+      backface-visibility: hidden;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card-front {
+      background: url('https://example.com/capa.png') center/cover no-repeat;
+      background-color: #6a5acd;
+    }
+
+    .card-back {
+      transform: rotateY(180deg);
+      background-color: white;
+    }
+    .card-back img {
+      width: 90%;
+      height: 90%;
+      object-fit: contain;
+    }
+
+    /* === GRIDS POR NÍVEL === */
+    #tabuleiro.nivel-1 {
+      grid-template-columns: repeat(3, 120px);
+    }
+    #tabuleiro.nivel-2 {
+      grid-template-columns: repeat(5, 120px);
+    }
+    #tabuleiro.nivel-3 {
+      grid-template-columns: repeat(8, 120px);
+    }
+
+    /* === BOTÃO VOLTAR AO MENU === */
+    .btn-voltar-menu {
+      position: fixed;
+      bottom: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 0.8rem 1.5rem;
+      background: linear-gradient(145deg, #6a5acd, #483d8b);
+      color: white;
+      border: none;
+      border-radius: 1rem;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      z-index: 10;
+      transition: all 0.3s ease;
+    }
+    .btn-voltar-menu {
+  /* Mantenha todos os estilos existentes e adicione: */
+  z-index: 100; /* Maior que o footer */
+  bottom: 50px; /* Acima do footer */
+    }
+    
+
+    /* === PAINEL CONFIGURAÇÕES === */
+    .painel-config {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(to bottom, #ffe8b3, #ffcc80);
+      border: 4px solid #ffa726;
+      border-radius: 20px;
+      padding: 1.5rem;
+      width: 300px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+      z-index: 999;
+    }
+    .painel-config .config-header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      font-weight: bold;
+      font-size: 1.5rem;
+      color: #4b0082;
+    }
+    .painel-config .config-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1rem;
+      gap: 10px;
+    }
+    .painel-config .config-item span {
+      flex-grow: 1;
+      font-size: 1rem;
+      font-weight: bold;
+      color: #333;
+    }
+    input[type=range] {
+      width: 100%;
+      height: 8px;
+      border-radius: 4px;
+    }
+
+    /* === SWITCH TOGGLE === */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 25px;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 17px;
+      width: 17px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #4caf50;
+    }
+    input:focus + .slider {
+      box-shadow: 0 0 1px #4caf50;
+    }
+    input:checked + .slider:before {
+      transform: translateX(25px);
+    }
+
+    /* === BOTÕES DO PAINEL === */
+    .config-botoes {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 1.5rem;
+      gap: 10px;
+    }
+    .btn-config-blue, .btn-config-pink {
+      padding: 0.5rem 1rem;
+      border-radius: 10px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      color: white;
+      transition: all 0.3s ease;
+    }
+    .btn-config-blue {
+      background-color: #2196f3;
+    }
+    .btn-config-pink {
+      background-color: #e91e63;
+    }
+    .btn-config-blue:hover {
+      background-color: #1769aa;
+      transform: translateY(-2px);
+    }
+    .btn-config-pink:hover {
+      background-color: #b0003a;
+      transform: translateY(-2px);
+    }
+
+    /* === MODAIS === */
+    .modal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal.hidden {
+      display: none;
+    }
+    .caixa-vitoria {
+      background: white;
+      border-radius: 15px;
+      padding: 2rem 3rem;
+      max-width: 90vw;
+      box-shadow: 0 0 30px rgba(0,0,0,0.5);
+      text-align: center;
+    }
+    .caixa-vitoria h2 {
+      color: #4b0082;
+      margin-bottom: 1.5rem;
+    }
+
+    /* === PÁGINAS === */
+    .page {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+      width: 100%;
+      padding: 1rem;
+     padding-bottom: 70px; /* Espaço para footer + botão */
+    }
+   
+    .page.active {
+      display: flex;
+    }
+
+    /* === INDICADOR DE NÍVEL === */
+    #nivel-atual {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #4b0082;
+      margin: 0.5rem 0;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    }
+    /* === FOOTER SIMPLES === */
+    .footer-minimal {
+        text-align: center;
+        padding: 10px 0;
+        font-size: 0.9rem;
+        color: white;
+        background: rgba(0, 0, 0, 0.7);
+        width: 100%;
+        position: fixed;
+        bottom: 0;
+        z-index: 90;
+        backdrop-filter: blur(3px);
+    }
+    /* Adicione isso no seu CSS geral */
+    .page {
+        padding-bottom: 50px; /* Espaço para o footer */
+    }
+/* Ajuste para a página do jogo */
+#game-page .footer-minimal {
+  position: relative;
+  background: linear-gradient(to right, #4b0082, #6a5acd);
+}
+    /* === RESPONSIVIDADE === */
+    @media (max-width: 768px) {
+      .titulo {
+        font-size: 2rem;
+      }
+      .botoes-niveis {
+        flex-direction: column;
+        gap: 0.8rem;
+      }
+      .btn-nivel {
+        padding: 0.8rem 1.2rem;
+        font-size: 1rem;
+      }
+      #tabuleiro.nivel-1 {
+        grid-template-columns: repeat(3, 100px);
+      }
+      #tabuleiro.nivel-2 {
+        grid-template-columns: repeat(4, 100px);
+      }
+      #tabuleiro.nivel-3 {
+        grid-template-columns: repeat(4, 100px);
+      }
+      .card {
+        width: 100px;
+        height: 100px;
+      }
+
+
+    /* Ajuste para a página do jogo */
+    #game-page .footer-creditos {
+    position: relative;
+    background: linear-gradient(to right, #4b0082, #6a5acd);
+    }
+    }
+  </style>
+</head>
+<body>
+  <!-- Página Inicial -->
+  <div id="home-page" class="page active">
+    <div class="logos">
+      <img src="https://i2.wp.com/fmpsc.edu.br/wp-content/uploads/2024/09/Marca-FMP-3.png?resize=768%2C285&ssl=1" alt="Logo FMP" class="logo-fmp" />
+      <img src="https://i2.wp.com/fmpsc.edu.br/wp-content/uploads/2024/09/Logo-ADS-FMP_6.png?resize=300%2C83&ssl=1" alt="Logo ADS" class="logo-ads" />
+    </div>
+    
+    <button class="gear-btn" id="gear-btn"></button>
+
+    <h1 class="titulo" style="margin-bottom: 0.5rem;">Jogo da Memória Toy Story</h1>
+
+    <div class="botoes-niveis" style="margin-top: 0.5rem;">
+      <a href="#" class="btn-nivel facil" data-nivel="1">Fácil - 3 Pares</a>
+      <a href="#" class="btn-nivel medio" data-nivel="2">Médio - 5 Pares</a>
+      <a href="#" class="btn-nivel dificil" data-nivel="3">Difícil - 8 Pares</a>
+    </div>
+    
+    <div class="painel-config hidden" id="painel-config">
+      <div class="config-header">
+        <h2>CONFIGURAÇÕES</h2>
+      </div>
+      <div class="config-item">
+        <i class="fas fa-music"></i>
+        <span>MÚSICA</span>
+        <input type="range" id="music-volume" min="0" max="1" step="0.1" value="1">
+      </div>
+      <div class="config-item">
+        <i class="fas fa-volume-up"></i>
+        <span>SOM</span>
+        <input type="range" id="sound-volume" min="0" max="1" step="0.1" value="1">
+      </div>
+      <div class="config-item">
+        <i class="fas fa-mobile-alt"></i>
+        <span>VIBRAR</span>
+        <label class="switch">
+          <input type="checkbox" id="vibrate-toggle" checked>
+          <span class="slider round"></span>
+        </label>
+      </div>
+      <div class="config-item">
+        <i class="fas fa-bell"></i>
+        <span>NOTIFICAÇÃO</span>
+        <label class="switch">
+          <input type="checkbox" id="notification-toggle" checked>
+          <span class="slider round"></span>
+        </label>
+      </div>
+      <div class="config-botoes">
+        <button class="btn-config-blue" id="back-config">VOLTAR</button>
+        <button class="btn-config-pink" id="save-config">SALVAR</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Página do Jogo -->
+  <div id="game-page" class="page">
+    <div class="logos">
+      <img src="https://i2.wp.com/fmpsc.edu.br/wp-content/uploads/2024/09/Marca-FMP-3.png?resize=768%2C285&ssl=1" alt="Logo FMP" class="logo-fmp" />
+      <img src="https://i2.wp.com/fmpsc.edu.br/wp-content/uploads/2024/09/Logo-ADS-FMP_6.png?resize=300%2C83&ssl=1" alt="Logo ADS" class="logo-ads" />
+    </div>
+
+    <button class="gear-btn" id="gear-btn-game"></button>
+
+    <h1 class="titulo" style="margin-top: 1rem;">Jogo da Memória - Toy Story</h1>
+
+    <div id="nivel-atual" class="text-xl font-bold mb-4 text-purple-800">
+      Nível: Fácil - 3 Pares
+    </div>
+
+    <div id="tabuleiro" class="grid gap-2 max-w-5xl w-full p-2 mt-2"></div>
+
+    <button id="voltar-menu" class="btn-voltar-menu">
+      <i class="fas fa-arrow-left mr-2"></i>Voltar ao Menu
+    </button>
+
+    <div id="modal-vitoria" class="modal hidden">
+      <div class="caixa-vitoria">
+        <h2 class="text-2xl font-bold mb-4 text-green-600">Você venceu!</h2>
+        <p id="tempo-final" class="text-lg mb-6">Tempo: 00:00</p>
+        <button id="proximo-nivel" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded">
+          Próximo Nível
+        </button>
+      </div>
+    </div>
+    
+    <div id="modal-finalizacao" class="modal hidden">
+      <div class="caixa-vitoria">
+        <h2 class="text-3xl font-bold mb-4 text-purple-800">Você finalizou todos os níveis, parabéns!</h2>
+        <button id="voltar-inicio" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded">
+          Voltar para o Início
+        </button>
+      </div>
+    </div>
+
+    <div class="painel-config hidden" id="painel-config-game">
+      <div class="config-header">
+        <h2>CONFIGURAÇÕES</h2>
+      </div>
+      <div class="config-item">
+        <i class="fas fa-music"></i>
+        <span>MÚSICA</span>
+        <input type="range" id="music-volume-game" min="0" max="1" step="0.1" value="1" />
+      </div>
+      <div class="config-item">
+        <i class="fas fa-volume-up"></i>
+        <span>SOM</span>
+        <input type="range" id="sound-volume-game" min="0" max="1" step="0.1" value="1" />
+      </div>
+      <div class="config-item">
+        <i class="fas fa-mobile-alt"></i>
+        <span>VIBRAR</span>
+        <label class="switch">
+          <input type="checkbox" id="vibrate-toggle-game" checked />
+          <span class="slider round"></span>
+        </label>
+      </div>
+      <div class="config-item">
+        <i class="fas fa-bell"></i>
+        <span>NOTIFICAÇÃO</span>
+        <label class="switch">
+          <input type="checkbox" id="notification-toggle-game" checked />
+          <span class="slider round"></span>
+        </label>
+      </div>
+      <div class="config-botoes">
+        <button class="btn-config-blue" id="back-config-game">VOLTAR</button>
+        <button class="btn-config-pink" id="save-config-game">SALVAR</button>
+      </div>
+    </div>
+
+    <audio id="musica" src="https://example.com/musica.mp3" loop></audio>
+  </div>
+
+  <script>
+    // Variáveis globais
+    let currentLevel = 1;
+    let gameStarted = false;
+    let startTime;
+    let timerInterval;
+    let matchedPairs = 0;
+    let settings = {
+      musicVolume: 1,
+      soundVolume: 1,
+      vibrate: true,
+      notifications: true
+    };
+
+    // URLs das imagens dos personagens (substitua com seus URLs reais)
+    const cardImages = {
+      1: 'https://s3.amazonaws.com/blog.dentrodahistoria.com.br/wp-content/uploads/2023/02/14174717/jessie-toy-story.jpg',
+      2: 'https://s3.amazonaws.com/blog.dentrodahistoria.com.br/wp-content/uploads/2023/02/14174643/buzz-toy-story.jpg',
+      3: 'https://s3.amazonaws.com/blog.dentrodahistoria.com.br/wp-content/uploads/2023/02/14175424/woody-1.jpg',
+      4: 'https://s3.amazonaws.com/blog.dentrodahistoria.com.br/wp-content/uploads/2023/02/14174700/Cabeca-de-Batata-toy-story.jpg',
+      5: 'https://s3.amazonaws.com/blog.dentrodahistoria.com.br/wp-content/uploads/2023/02/14174810/slinky-toy-story.jpg',
+      6: 'https://s3.amazonaws.com/blog.dentrodahistoria.com.br/wp-content/uploads/2023/02/14174751/rex-toy-story.jpg',
+      7: 'https://s3.amazonaws.com/blog.dentrodahistoria.com.br/wp-content/uploads/2023/02/14174626/aliens-toy-story.jpg',
+      8: 'https://recreio.com.br/wp-content/uploads/2024/11/toystory2.jpg'
+    };
+
+    // Elementos da página inicial
+    const homePage = document.getElementById('home-page');
+    const gamePage = document.getElementById('game-page');
+    const levelButtons = document.querySelectorAll('.btn-nivel');
+    const gearBtn = document.getElementById('gear-btn');
+    const configPanel = document.getElementById('painel-config');
+    const backConfigBtn = document.getElementById('back-config');
+    const saveConfigBtn = document.getElementById('save-config');
+    const musicVolume = document.getElementById('music-volume');
+    const soundVolume = document.getElementById('sound-volume');
+    const vibrateToggle = document.getElementById('vibrate-toggle');
+    const notificationToggle = document.getElementById('notification-toggle');
+
+    // Elementos da página do jogo
+    const tabuleiro = document.getElementById('tabuleiro');
+    const gearBtnGame = document.getElementById('gear-btn-game');
+    const configPanelGame = document.getElementById('painel-config-game');
+    const backConfigBtnGame = document.getElementById('back-config-game');
+    const saveConfigBtnGame = document.getElementById('save-config-game');
+    const musicVolumeGame = document.getElementById('music-volume-game');
+    const soundVolumeGame = document.getElementById('sound-volume-game');
+    const vibrateToggleGame = document.getElementById('vibrate-toggle-game');
+    const notificationToggleGame = document.getElementById('notification-toggle-game');
+    const musica = document.getElementById('musica');
+    const modalVitoria = document.getElementById('modal-vitoria');
+    const modalFinalizacao = document.getElementById('modal-finalizacao');
+    const tempoFinal = document.getElementById('tempo-final');
+    const proximoNivelBtn = document.getElementById('proximo-nivel');
+    const voltarInicioBtn = document.getElementById('voltar-inicio');
+    const voltarMenuBtn = document.getElementById('voltar-menu');
+    const nivelAtualText = document.getElementById('nivel-atual');
+
+    // Event Listeners
+    document.addEventListener('DOMContentLoaded', () => {
+      loadSettings();
+      setupEventListeners();
+    });
+
+    function setupEventListeners() {
+      // Página inicial
+      levelButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          currentLevel = parseInt(btn.dataset.nivel);
+          startGame(currentLevel);
+        });
+      });
+
+      gearBtn.addEventListener('click', toggleConfigPanel);
+      backConfigBtn.addEventListener('click', toggleConfigPanel);
+      saveConfigBtn.addEventListener('click', saveSettings);
+
+      // Página do jogo
+      gearBtnGame.addEventListener('click', toggleConfigPanelGame);
+      backConfigBtnGame.addEventListener('click', toggleConfigPanelGame);
+      saveConfigBtnGame.addEventListener('click', saveSettingsGame);
+      proximoNivelBtn.addEventListener('click', nextLevel);
+      voltarInicioBtn.addEventListener('click', returnToHome);
+      voltarMenuBtn.addEventListener('click', returnToHome);
+    }
+
+    function loadSettings() {
+      const savedSettings = localStorage.getItem('memoryGameSettings');
+      if (savedSettings) {
+        settings = JSON.parse(savedSettings);
+        
+        // Atualizar controles da página inicial
+        musicVolume.value = settings.musicVolume;
+        soundVolume.value = settings.soundVolume;
+        vibrateToggle.checked = settings.vibrate;
+        notificationToggle.checked = settings.notifications;
+        
+        // Atualizar controles da página do jogo
+        musicVolumeGame.value = settings.musicVolume;
+        soundVolumeGame.value = settings.soundVolume;
+        vibrateToggleGame.checked = settings.vibrate;
+        notificationToggleGame.checked = settings.notifications;
+        
+        // Aplicar configurações de áudio
+        musica.volume = settings.musicVolume;
+      }
+    }
+
+    function saveSettings() {
+      settings.musicVolume = parseFloat(musicVolume.value);
+      settings.soundVolume = parseFloat(soundVolume.value);
+      settings.vibrate = vibrateToggle.checked;
+      settings.notifications = notificationToggle.checked;
+      
+      localStorage.setItem('memoryGameSettings', JSON.stringify(settings));
+      musica.volume = settings.musicVolume;
+      toggleConfigPanel();
+    }
+
+    function saveSettingsGame() {
+      settings.musicVolume = parseFloat(musicVolumeGame.value);
+      settings.soundVolume = parseFloat(soundVolumeGame.value);
+      settings.vibrate = vibrateToggleGame.checked;
+      settings.notifications = notificationToggleGame.checked;
+      
+      localStorage.setItem('memoryGameSettings', JSON.stringify(settings));
+      musica.volume = settings.musicVolume;
+      toggleConfigPanelGame();
+    }
+
+    function toggleConfigPanel() {
+      configPanel.classList.toggle('hidden');
+    }
+
+    function toggleConfigPanelGame() {
+      configPanelGame.classList.toggle('hidden');
+    }
+
+    function startGame(level) {
+      homePage.classList.remove('active');
+      gamePage.classList.add('active');
+      
+      // Atualizar texto do nível atual
+      updateLevelText(level);
+      
+      // Iniciar música
+      musica.currentTime = 0;
+      musica.play();
+      
+      // Configurar tabuleiro
+      setupBoard(level);
+      
+      // Iniciar cronômetro
+      startTimer();
+    }
+
+    function updateLevelText(level) {
+      switch(level) {
+        case 1:
+          nivelAtualText.textContent = 'Nível: Fácil - 3 Pares';
+          break;
+        case 2:
+          nivelAtualText.textContent = 'Nível: Médio - 5 Pares';
+          break;
+        case 3:
+          nivelAtualText.textContent = 'Nível: Difícil - 8 Pares';
+          break;
+      }
+    }
+
+    function setupBoard(level) {
+      tabuleiro.innerHTML = '';
+      tabuleiro.className = 'grid gap-2 max-w-5xl w-full p-2 mt-2';
+      
+      let pairs;
+      let columns;
+      
+      switch(level) {
+        case 1:
+          pairs = 3;
+          columns = 3;
+          tabuleiro.classList.add('nivel-1');
+          break;
+        case 2:
+          pairs = 5;
+          columns = 5;
+          tabuleiro.classList.add('nivel-2');
+          break;
+        case 3:
+          pairs = 8;
+          columns = 8;
+          tabuleiro.classList.add('nivel-3');
+          break;
+        default:
+          pairs = 3;
+          columns = 3;
+          tabuleiro.classList.add('nivel-1');
+      }
+      
+      // Criar pares de cartas
+      const cards = [];
+      for (let i = 1; i <= pairs; i++) {
+        cards.push(i);
+        cards.push(i);
+      }
+      
+      // Embaralhar cartas
+      shuffleArray(cards);
+      
+      // Criar cartas no tabuleiro
+      cards.forEach((cardValue, index) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.dataset.value = cardValue;
+        
+        card.innerHTML = `
+          <div class="card-inner">
+            <div class="card-face card-front"></div>
+            <div class="card-face card-back">
+              <img src="${cardImages[cardValue]}" alt="Personagem ${cardValue}">
+            </div>
+          </div>
+        `;
+        
+        card.addEventListener('click', flipCard);
+        tabuleiro.appendChild(card);
+      });
+    }
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    let hasFlippedCard = false;
+    let lockBoard = false;
+    let firstCard, secondCard;
+
+    function flipCard() {
+      if (lockBoard) return;
+      if (this === firstCard) return;
+      
+      this.classList.add('flipped');
+      
+      if (!hasFlippedCard) {
+        // Primeira carta virada
+        hasFlippedCard = true;
+        firstCard = this;
+        return;
+      }
+      
+      // Segunda carta virada
+      secondCard = this;
+      checkForMatch();
+    }
+
+    function checkForMatch() {
+      const isMatch = firstCard.dataset.value === secondCard.dataset.value;
+      
+      if (isMatch) {
+        disableCards();
+        matchedPairs++;
+        
+        // Verificar se o jogo acabou
+        const totalPairs = document.querySelectorAll('.card').length / 2;
+        if (matchedPairs === totalPairs) {
+          endGame();
+        }
+      } else {
+        unflipCards();
+      }
+    }
+
+    function disableCards() {
+      firstCard.removeEventListener('click', flipCard);
+      secondCard.removeEventListener('click', flipCard);
+      
+      resetBoard();
+    }
+
+    function unflipCards() {
+      lockBoard = true;
+      
+      setTimeout(() => {
+        firstCard.classList.remove('flipped');
+        secondCard.classList.remove('flipped');
+        
+        resetBoard();
+      }, 1000);
+    }
+
+    function resetBoard() {
+      [hasFlippedCard, lockBoard] = [false, false];
+      [firstCard, secondCard] = [null, null];
+    }
+
+    function startTimer() {
+      startTime = new Date();
+      clearInterval(timerInterval);
+      matchedPairs = 0;
+      
+      timerInterval = setInterval(() => {
+        const currentTime = new Date();
+        const elapsedTime = new Date(currentTime - startTime);
+        const minutes = elapsedTime.getMinutes().toString().padStart(2, '0');
+        const seconds = elapsedTime.getSeconds().toString().padStart(2, '0');
+        
+        // Atualizar display do tempo (se necessário)
+        // document.getElementById('timer-display').textContent = `${minutes}:${seconds}`;
+      }, 1000);
+    }
+
+    function endGame() {
+      clearInterval(timerInterval);
+      
+      const endTime = new Date();
+      const elapsedTime = new Date(endTime - startTime);
+      const minutes = elapsedTime.getMinutes().toString().padStart(2, '0');
+      const seconds = elapsedTime.getSeconds().toString().padStart(2, '0');
+      
+      tempoFinal.textContent = `Tempo: ${minutes}:${seconds}`;
+      
+      if (currentLevel < 3) {
+        modalVitoria.classList.remove('hidden');
+      } else {
+        modalFinalizacao.classList.remove('hidden');
+      }
+    }
+
+    function nextLevel() {
+      modalVitoria.classList.add('hidden');
+      currentLevel++;
+      startGame(currentLevel);
+    }
+
+    function returnToHome() {
+      // Parar música e timer
+      musica.pause();
+      clearInterval(timerInterval);
+      
+      // Esconder todos os modais
+      modalFinalizacao.classList.add('hidden');
+      modalVitoria.classList.add('hidden');
+      configPanelGame.classList.add('hidden');
+      
+      // Voltar para a página inicial
+      gamePage.classList.remove('active');
+      homePage.classList.add('active');
+      
+      // Resetar o tabuleiro
+      tabuleiro.innerHTML = '';
+      matchedPairs = 0;
+      
+      document.getElementById('ano-atual').textContent = new Date().getFullYear();
+    }
+  </script>
+    <footer class="footer-minimal">
+  <p>Amanda Ávila - ADS</p>
+</footer>
+</body>
+</html>
